@@ -3,18 +3,21 @@
 
 #include <QModelIndex>
 
+#include <QDebug>
+#define DEB qDebug()
+
 int TreeModel::insertions_ = 0;
 
 TreeModel::TreeModel (int columns, QObject* parent)
     : QAbstractItemModel{parent}
-    , rootItem{std::make_unique<TreeItem> ()} {
+    , root_{std::make_unique<TreeItem> (columns)} {
     createTestItems();
 }
 
 int TreeModel::columnCount (const QModelIndex& parent) const {
     Q_UNUSED(parent)
 
-    return columns_;
+    return root_->columns();
 }
 
 QVariant TreeModel::data (const QModelIndex& index, int role) const {
@@ -42,12 +45,12 @@ TreeItem* TreeModel::itemFromIndex (const QModelIndex& index) const {
         }
     }
 
-    return rootItem.get();
+    return root_.get();
 }
 
 QVariant TreeModel::headerData (int section, Qt::Orientation orientation, int role) const {
     if (orientation == Qt::Horizontal) {
-        return rootItem->data(section, role);
+        return root_->data(section, role);
     } else {
         return {};
     }
@@ -80,12 +83,19 @@ bool TreeModel::insertRows (int row, int count, const QModelIndex& parent) {
     int last_row = row + count - 1;
     beginInsertRows(parent, row, last_row);
     for (int i = row; i <= last_row; ++i) {
-        auto item = std::make_unique<TreeItem> (parent_item);
+        auto item = std::make_unique<TreeItem> (columnCount(), parent_item);
         item->setData(0, Qt::DisplayRole, "Insertion " + QString::number(++insertions_));
         parent_item->insertChild(row, std::move(item));
     }
     endInsertRows();
 
+    return true;
+}
+
+bool TreeModel::insertColumns (int column, int count, const QModelIndex& parent) {
+    beginInsertColumns(parent, column, column + count - 1);
+    root_->insertColumns(column, count);
+    endInsertColumns();
     return true;
 }
 
@@ -99,7 +109,7 @@ QModelIndex TreeModel::parent (const QModelIndex& index) const {
                         ? child_item->parent()
                         : nullptr;
 
-    if (parent_item == rootItem.get() || !parent_item) {
+    if (parent_item == root_.get() || !parent_item) {
         return QModelIndex();
     }
 
@@ -127,28 +137,47 @@ bool TreeModel::setData (const QModelIndex& index, const QVariant& value, int ro
 }
 
 bool TreeModel::setHeaderData (int section, Qt::Orientation orientation, const QVariant& value, int role) {
-    if (role != Qt::EditRole || orientation != Qt::Horizontal) {
-        return false;
+    if (orientation == Qt::Vertical) {
+        return QAbstractItemModel::setHeaderData(section, orientation, value, role);
     }
 
-    rootItem->setData(section, role, value);
+    if (role == Qt::EditRole) {
+        role = Qt::DisplayRole;
+    }
+
+    root_->setData(section, role, value);
     emit headerDataChanged(orientation, section, section);
 
     return true;
 }
 
 void TreeModel::createTestItems () {
-    auto item1 = std::make_unique<TreeItem> ();
+    auto item1 = std::make_unique<TreeItem> (1);
     item1->setData(0, Qt::DisplayRole, "row 1");
-    auto item2 = std::make_unique<TreeItem> ();
+    auto item2 = std::make_unique<TreeItem> (1);
     item2->setData(0, Qt::DisplayRole, "row 2");
-    auto item3 = std::make_unique<TreeItem> ();
+    auto item3 = std::make_unique<TreeItem> (1);
     item3->setData(0, Qt::DisplayRole, "row 3");
-    auto item4 = std::make_unique<TreeItem> ();
+    auto item4 = std::make_unique<TreeItem> (1);
     item4->setData(0, Qt::DisplayRole, "row 4");
 
     item3->appendChild(std::move(item4));
     item1->appendChild(std::move(item2));
     item1->appendChild(std::move(item3));
-    rootItem->appendChild(std::move(item1));
+    root_->appendChild(std::move(item1));
+    setHeaderData(0, Qt::Horizontal, "Column 1", Qt::DisplayRole);
+}
+
+void TreeModel::dumpModel () {
+    std::function<void(TreeItem*)> printItems;
+    printItems = [&printItems](TreeItem* item) {
+                     for (int i = 0; i < item->columns(); ++i) {
+                         DEB << i << ":" << item->data(i);
+                     }
+                     for (int i = 0; i < item->childCount(); ++i) {
+                         DEB << "print next child";
+                         printItems(item->child(i));
+                     }
+                 };
+    printItems(root_.get());
 }

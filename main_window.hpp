@@ -23,6 +23,7 @@ public:
 private slots:
     void insertRow ();
     void insertChild ();
+    void insertColumn ();
     void onSelectionChanged (QItemSelection selected, QItemSelection deselected);
 
 private:

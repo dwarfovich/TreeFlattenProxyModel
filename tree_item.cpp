@@ -1,7 +1,13 @@
 #include "tree_item.hpp"
 
-TreeItem::TreeItem (TreeItem* parent)
-    : parent_(parent) {}
+#include <stdexcept>
+
+#include <QDebug>
+#define DEB qDebug()
+
+TreeItem::TreeItem (int columns, TreeItem* parent)
+    : parent_(parent)
+    , data_{std::vector<ItemData> (columns)} {}
 
 TreeItem* TreeItem::child (int index) {
     if (index < 0 || index >= static_cast<int> (children_.size())) {
@@ -12,6 +18,10 @@ TreeItem* TreeItem::child (int index) {
 
 int TreeItem::childCount () const {
     return static_cast<int> (children_.size());
+}
+
+int TreeItem::columns () const {
+    return data_.size();
 }
 
 int TreeItem::row () const {
@@ -27,9 +37,40 @@ int TreeItem::row () const {
     return 0;
 }
 
+void TreeItem::insertColumns (int start, int count) {
+    // FIXME: check count too; handle exceptions
+    if (start < 0 || start > data_.size()) {
+        DEB << "start" << start;
+        throw std::invalid_argument("Wrong start argument is out of range");
+    }
+
+    for (int i = start; i < start + count; ++i) {
+        data_.insert(data_.begin() + i, ItemData {});
+    }
+
+    for (auto& child : children_) {
+        child->insertColumns(start, count);
+    }
+}
+
 void TreeItem::appendChild (ItemUptr item) {
     item->setParent(this);
     children_.push_back(std::move(item));
+}
+
+void TreeItem::removeColumns (int start, int count) {
+    if (start < 0 || start >= data_.size()) {
+        return;
+    }
+
+    if (start + count > data_.size()) {
+        count = data_.size() - start;
+    }
+
+    data_.erase(data_.begin() + start, data_.begin() + start + count);
+    for (auto& child : children_) {
+        child->removeColumns(start, count);
+    }
 }
 
 void TreeItem::setParent (TreeItem* parent) {
@@ -37,7 +78,11 @@ void TreeItem::setParent (TreeItem* parent) {
 }
 
 QVariant TreeItem::data (int column, int role) const {
-    return data_.value({ column, role }, {});
+    if (column >= 0 && column < data_.size()) {
+        return data_[column].value(role);
+    } else {
+        return {};
+    }
 }
 
 void TreeItem::insertChild (int index, ItemUptr item) {
@@ -56,5 +101,9 @@ TreeItem* TreeItem::parent () {
 }
 
 void TreeItem::setData (int column, int role, const QVariant& value) {
-    data_[{ column, role }] = value;
+    if (column < 0 || column >= data_.size()) {
+        return;
+    } else {
+        data_[column].setValue(value, role);
+    }
 }

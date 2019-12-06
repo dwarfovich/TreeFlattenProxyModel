@@ -11,12 +11,13 @@
 MainWindow::MainWindow (QWidget* parent)
     : QMainWindow{parent}
     , ui_{new Ui::MainWindow}
-    , tree_model_{new TreeModel { 2, this }} {
+    , tree_model_{new TreeModel { 1, this }} {
     ui_->setupUi(this);
     ui_->tree_view_->setModel(tree_model_);
     ui_->tree_view_->expandAll();
     connect(ui_->insert_row_button, &QPushButton::clicked, this, &MainWindow::insertRow);
     connect(ui_->insert_child_button, &QPushButton::clicked, this, &MainWindow::insertChild);
+    connect(ui_->insert_column_button, &QPushButton::clicked, this, &MainWindow::insertColumn);
 // connect(ui_->tree_view_->selectionModel(), &QItemSelectionModel::selectionChanged,
 // this, &MainWindow::onSelectionChanged);
 }
@@ -35,6 +36,14 @@ void MainWindow::insertChild () {
     int  row   = tree_model_->rowCount(index);
     tree_model_->insertRows(row, 1, index);
     ui_->tree_view_->expandAll();
+}
+
+void MainWindow::insertColumn () {
+    auto index  = ui_->tree_view_->selectionModel()->currentIndex();
+    int  column = index.column() >= 0
+                  ? index.column()
+                  : tree_model_->columnCount({}) - 1;
+    tree_model_->insertColumns(column + 1, 1, {});
 }
 
 void MainWindow::onSelectionChanged (QItemSelection selected, QItemSelection deselected) {

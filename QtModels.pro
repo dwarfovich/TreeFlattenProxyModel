@@ -16,6 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    item_data.cpp \
     main.cpp \
     main_window.cpp \
     tree_flatten_proxy_model.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
     tree_model.cpp
 
 HEADERS += \
+    item_data.hpp \
     main_window.hpp \
     tree_flatten_proxy_model.hpp \
     tree_item.hpp \
