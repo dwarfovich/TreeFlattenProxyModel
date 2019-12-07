@@ -58,13 +58,14 @@ void TreeItem::appendChild (ItemUptr item) {
     children_.push_back(std::move(item));
 }
 
+void TreeItem::removeChildren (int first, int count) {
+    auto iter = children_.begin() + first;
+    children_.erase(iter, iter + count);
+}
+
 void TreeItem::removeColumns (int start, int count) {
     if (start < 0 || start >= data_.size()) {
         return;
-    }
-
-    if (start + count > data_.size()) {
-        count = data_.size() - start;
     }
 
     data_.erase(data_.begin() + start, data_.begin() + start + count);

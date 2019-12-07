@@ -22,6 +22,7 @@ public:
     int       row () const;
     void      insertChild (int index, ItemUptr item);
     void      appendChild (ItemUptr item);
+    void      removeChildren (int first, int count);
     void      insertColumns (int start, int count);
     void      removeColumns (int start, int count);
     QVariant  data (int column, int role = Qt::DisplayRole) const;

@@ -18,6 +18,8 @@ MainWindow::MainWindow (QWidget* parent)
     connect(ui_->insert_row_button, &QPushButton::clicked, this, &MainWindow::insertRow);
     connect(ui_->insert_child_button, &QPushButton::clicked, this, &MainWindow::insertChild);
     connect(ui_->insert_column_button, &QPushButton::clicked, this, &MainWindow::insertColumn);
+    connect(ui_->delete_row_button, &QPushButton::clicked, this, &MainWindow::deleteRow);
+    connect(ui_->delete_column_button, &QPushButton::clicked, this, &MainWindow::deleteColumn);
 // connect(ui_->tree_view_->selectionModel(), &QItemSelectionModel::selectionChanged,
 // this, &MainWindow::onSelectionChanged);
 }
@@ -27,23 +29,35 @@ MainWindow::~MainWindow () {
 }
 
 void MainWindow::insertRow () {
-    auto index = ui_->tree_view_->selectionModel()->currentIndex();
+    const auto& index = ui_->tree_view_->selectionModel()->currentIndex();
     tree_model_->insertRows(index.row() + 1, 1, tree_model_->parent(index));
 }
 
 void MainWindow::insertChild () {
-    auto index = ui_->tree_view_->selectionModel()->currentIndex();
-    int  row   = tree_model_->rowCount(index);
+    const auto& index = ui_->tree_view_->selectionModel()->currentIndex();
+    int         row   = tree_model_->rowCount(index);
     tree_model_->insertRows(row, 1, index);
     ui_->tree_view_->expandAll();
 }
 
 void MainWindow::insertColumn () {
-    auto index  = ui_->tree_view_->selectionModel()->currentIndex();
-    int  column = index.column() >= 0
-                  ? index.column()
-                  : tree_model_->columnCount({}) - 1;
+    const auto& index  = ui_->tree_view_->selectionModel()->currentIndex();
+    int         column = index.column() >= 0
+                         ? index.column()
+                         : tree_model_->columnCount({}) - 1;
     tree_model_->insertColumns(column + 1, 1, {});
+}
+
+void MainWindow::deleteRow () {
+    const auto& index = ui_->tree_view_->selectionModel()->currentIndex();
+    tree_model_->removeRows(index.row(), 1, tree_model_->parent(index));
+}
+
+void MainWindow::deleteColumn () {
+    const auto& index = ui_->tree_view_->selectionModel()->currentIndex();
+    if (index.column() > 0) {
+        tree_model_->removeColumns(index.column(), 1, {});
+    }
 }
 
 void MainWindow::onSelectionChanged (QItemSelection selected, QItemSelection deselected) {

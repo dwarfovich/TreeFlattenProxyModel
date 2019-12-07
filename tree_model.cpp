@@ -99,6 +99,29 @@ bool TreeModel::insertColumns (int column, int count, const QModelIndex& parent)
     return true;
 }
 
+bool TreeModel::removeRows (int row, int count, const QModelIndex& parent) {
+    if (row < 0) {
+        return false;
+    }
+
+    auto* parent_item = itemFromIndex(parent);
+    beginRemoveRows(parent, row, row + count - 1);
+    parent_item->removeChildren(row, count);
+    endRemoveRows();
+    return true;
+}
+
+bool TreeModel::removeColumns (int column, int count, const QModelIndex& parent) {
+    if (column < 0) {
+        return false;
+    }
+
+    beginRemoveColumns(parent, column, column + count - 1);
+    root_->removeColumns(column, count);
+    endRemoveColumns();
+    return true;
+}
+
 QModelIndex TreeModel::parent (const QModelIndex& index) const {
     if (!index.isValid()) {
         return {};

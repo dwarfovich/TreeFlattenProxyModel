@@ -24,6 +24,8 @@ private slots:
     void insertRow ();
     void insertChild ();
     void insertColumn ();
+    void deleteRow ();
+    void deleteColumn ();
     void onSelectionChanged (QItemSelection selected, QItemSelection deselected);
 
 private:
